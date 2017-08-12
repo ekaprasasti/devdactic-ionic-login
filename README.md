@@ -140,7 +140,7 @@ export class AuthService {
 
 Akan berisi 2 input dan 2 button, input akan terkoneksi dengan objek `registerCredentials` dan akan di lewatkan ke `authService` ketika kita menekan login.
 
-Setelah login kita akan di antarkan ke `HomePage`.
+Ketika login berhasil kita akan di antarkan ke `HomePage`.
 
 Buka file `src/pages/login/login.ts` dan edit kodenya menjadi seperti ini:
 
@@ -303,5 +303,214 @@ Login screen kita akan terlihat seperti berikut saat ini:
 
 ![login screen](https://devdactic.com/wp-content/uploads/2016/10/ionic-2-login-template.png)
 
+## Register Page
 
+Ketika register berhasil di lakukan, user akan kembali menuju halaman login dengan memanggil fungsi `popToRoot`.
 
+Buka file `src/pages/register/register.ts` dan ganti kodenya menjadi seperti berikut:
+
+```javascript
+import { Component } from '@angular/core';
+import { NavController, AlertController, IonicPage } from 'ionic-angular';
+import { AuthService } from '../../providers/auth-service';
+ 
+@IonicPage()
+@Component({
+  selector: 'page-register',
+  templateUrl: 'register.html',
+})
+export class RegisterPage {
+  createSuccess = false;
+  registerCredentials = { email: '', password: '' };
+ 
+  constructor(private nav: NavController, private auth: AuthService, private alertCtrl: AlertController) { }
+ 
+  public register() {
+    this.auth.register(this.registerCredentials).subscribe(success => {
+      if (success) {
+        this.createSuccess = true;
+        this.showPopup("Success", "Account created.");
+      } else {
+        this.showPopup("Error", "Problem creating account.");
+      }
+    },
+      error => {
+        this.showPopup("Error", error);
+      });
+  }
+ 
+  showPopup(title, text) {
+    let alert = this.alertCtrl.create({
+      title: title,
+      subTitle: text,
+      buttons: [
+        {
+          text: 'OK',
+          handler: data => {
+            if (this.createSuccess) {
+              this.nav.popToRoot();
+            }
+          }
+        }
+      ]
+    });
+    alert.present();
+  }
+}
+```
+
+Edit file `src/pages/register/register.html` menjadi seperti ini:
+
+```html
+<ion-header>
+  <ion-navbar color="dark">
+    <ion-title>Register</ion-title>
+  </ion-navbar>
+</ion-header>
+ 
+<ion-content class="login-content" padding>
+  <div class="login-box">
+    
+    <form (ngSubmit)="register()" #registerForm="ngForm">
+      <ion-row>
+        <ion-col>
+          <ion-list inset>
+            
+            <ion-item>
+              <ion-input type="text" placeholder="Email" name="email" [(ngModel)]="registerCredentials.email" required></ion-input>
+            </ion-item>
+            
+            <ion-item>
+              <ion-input type="password" placeholder="Password" name="password" [(ngModel)]="registerCredentials.password" required></ion-input>
+            </ion-item>
+            
+          </ion-list>
+        </ion-col>
+      </ion-row>
+      
+      <ion-row>
+        <ion-col class="signup-col">
+          <button ion-button class="submit-btn" full type="submit" [disabled]="!registerForm.form.valid">Register</button>
+        </ion-col>
+      </ion-row>
+      
+    </form>
+  </div>
+</ion-content>
+```
+
+Styling halaman register pada file `src/pages/register/register.scss`:
+
+```css
+page-register {
+  .login-content {
+    background: #56CA96;
+ 
+    .login-box {
+      background: #509287;
+      padding: 20px 20px 0px 20px;
+      margin-top: 30px;
+    }
+ 
+    ion-row {
+       align-items: center;
+       text-align: center;
+     }
+ 
+     ion-item {
+         border-radius: 30px !important;
+         padding-left: 30px !important;
+         font-size: 0.9em;
+         margin-bottom: 10px;
+         border: 1px solid #ffffff;
+         border-bottom: 0px !important;
+         box-shadow: none !important;
+     }
+ 
+     .signup-col {
+       margin: 0px 16px 0px 16px;
+       padding-bottom: 20px;
+     }
+ 
+     .item-inner {
+       border-bottom-color: #ffffff !important;
+       box-shadow: none !important;
+     }
+ 
+     .submit-btn {
+       background: #51CFB1;
+       border-radius: 30px !important;
+       border: 1px solid #ffffff;
+     }
+  }
+}
+```
+
+## Member Area
+
+Ketika user berhasil login, maka user akan di bawa ke `HomePage`.
+
+Buka file `src/pages/home/home.ts` dan edit kodenya menjadi seperti berikut:
+
+```javascript
+import { Component } from '@angular/core';
+import { NavController, IonicPage } from 'ionic-angular';
+import { AuthService } from '../../providers/auth-service';
+ 
+@IonicPage()
+@Component({
+  selector: 'page-home',
+  templateUrl: 'home.html'
+})
+export class HomePage {
+  username = '';
+  email = '';
+  constructor(private nav: NavController, private auth: AuthService) {
+    let info = this.auth.getUserInfo();
+    this.username = info['name'];
+    this.email = info['email'];
+  }
+ 
+  public logout() {
+    this.auth.logout().subscribe(succ => {
+      this.nav.setRoot('LoginPage')
+    });
+  }
+}
+```
+
+Edit file html halaman home `src/pages/home/home.html`:
+
+```html
+<ion-header>
+  <ion-navbar color="dark">
+    <ion-title>
+      Member Area
+    </ion-title>
+    <ion-buttons end>
+      <button ion-button (click)="logout()">
+        <ion-icon name="log-out"></ion-icon>
+      </button>
+    </ion-buttons>
+  </ion-navbar>
+</ion-header>
+ 
+<ion-content class="home" padding>
+  <h3>Welcome inside, {{username}}!</h3>
+  Your Email is: {{email}}
+</ion-content>
+```
+
+Styling `HomePage` pada file `src/pages/home/home.scss`:
+
+```css
+page-home {
+  .home {
+    background: #56CA96;
+  }
+}
+```
+
+## Kesimpulan
+
+Pada tutorial kali ini kita membuat template login Ionic 2 dari dasar yang bisa kita jadikan acuan pada project selanjutnya. Tentu kita membutuhkan backend yang tepat, jadi ini hanya permulaan pada aplikasi kita.
